@@ -10,8 +10,6 @@
 
 void PluginInit();
 
-Logger logger(PLUGIN_NAME);
-
 void CheckProtocolVersion()
 {
 
