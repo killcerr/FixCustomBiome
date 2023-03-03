@@ -347,7 +347,7 @@ THook(void,
       "V?$allocator@UBiomeNoiseTarget@@@std@@@std@@AEBVBiomeRegistry@@@Z",
       OverworldBiomeBuilder *_this, std::vector<_BiomeNoiseTarget> &a1,
       BiomeRegistry &a2) {
-  // original(_this, a1, a2);
+  original(_this, a1, a2);
   for (auto &def : defs) {
     auto biome = a2.lookupByName(def.first);
     if (def.second.type == "underground")
