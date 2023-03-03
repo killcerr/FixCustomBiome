@@ -40,17 +40,18 @@ std::string to_string(const Biome &b) {
 } // namespace std
 
 struct biome_data_t {
-  std::array<_climateUtils_parameter, 5> first;
-  float second;
+  std::array<_climateUtils_parameter, 5> parameter;
+  float offset;
   std::string type;
 };
 
-std::unordered_map<std::string, biome_data_t, std::hash<std::string>> defs;
+std::unordered_map<std::string, biome_data_t, std::hash<std::string>> defs,
+    modification_defs;
 
-#define LOG_KEY_NOT_FOUND(KEY) logger.info("key not found:{}", #KEY);
+#define LOG_KEY_NOT_FOUND(KEY) logger.error("key not found:{}", #KEY);
 
 void load_single_climate_def(fs::path p) {
-  logger.info(__func__);
+  // logger.info(__func__);
   std::wcout << p.c_str() << "\n";
   std::error_code ec;
   auto s = fs::status(p, ec);
@@ -138,20 +139,121 @@ void load_single_climate_def(fs::path p) {
     } catch (...) {
       LOG_KEY_NOT_FOUND(type);
     }
-    logger.info(i.key());
-    defs[(i.key())].first[0] = temperature;
-    defs[(i.key())].first[1] = humidity;
-    defs[(i.key())].first[2] = continentalness;
-    defs[(i.key())].first[3] = erosion;
-    defs[(i.key())].first[4] = weirdness;
-    defs[(i.key())].second = offset;
+    // logger.info(i.key());
+    defs[(i.key())].parameter[0] = temperature;
+    defs[(i.key())].parameter[1] = humidity;
+    defs[(i.key())].parameter[2] = continentalness;
+    defs[(i.key())].parameter[3] = erosion;
+    defs[(i.key())].parameter[4] = weirdness;
+    defs[(i.key())].offset = offset;
     defs[(i.key())].type = type;
-    logger.info(__func__);
+    // logger.info(__func__);
   }
 }
 
+void load_signal_biome_modification_defs(fs::path p) {
+  std::wcout << p.c_str() << "\n";
+  std::error_code ec;
+  auto s = fs::status(p, ec);
+  if (ec)
+    return;
+  if (s.type() != fs::file_type::regular)
+    return;
+  fs::fstream fin(p, fs::ios::in);
+  std::string d, t;
+  while (fs::getline(fin, t)) {
+    d += t;
+    d += "\n";
+  }
+  fin.close();
+  fs::json j = fs::json::parse(d, nullptr, true, true);
+  if (!j.is_object())
+    return;
+  for (auto &i : j.items()) {
+    _climateUtils_parameter temperature, humidity, continentalness, erosion,
+        weirdness;
+    std::string type;
+    float offset;
+    try {
+      temperature.max =
+          i.value().at("temperature").at("max").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(temperature.max)
+    }
+    try {
+      temperature.min =
+          i.value().at("temperature").at("min").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(temperature.min)
+    }
+    try {
+      humidity.max = i.value().at("humidity").at("max").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(humidity.max)
+    }
+    try {
+      humidity.min = i.value().at("humidity").at("min").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(humidity.min)
+    }
+    try {
+      continentalness.max =
+          i.value().at("continentalness").at("max").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(continentalness.max)
+    }
+    try {
+      continentalness.min =
+          i.value().at("continentalness").at("min").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(continentalness.min)
+    }
+    try {
+      erosion.max = i.value().at("erosion").at("max").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(erosion.max)
+    }
+    try {
+      erosion.min = i.value().at("erosion").at("min").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(erosion.min)
+    }
+    try {
+      weirdness.max = i.value().at("weirdness").at("max").get<double>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(weirdness.max)
+    }
+    try {
+      weirdness.min = i.value().at("weirdness").at("min").get<float>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(weirdness.min)
+    }
+    try {
+      offset = i.value().at("offset").get<float>() * 10000;
+    } catch (...) {
+      LOG_KEY_NOT_FOUND(offset)
+    }
+    // try {
+    //   type = i.value().at("type").get<std::string>();
+    // } catch (...) {
+    //   LOG_KEY_NOT_FOUND(type);
+    // }
+    modification_defs[(i.key())].parameter[0] = temperature;
+    modification_defs[(i.key())].parameter[1] = humidity;
+    modification_defs[(i.key())].parameter[2] = continentalness;
+    modification_defs[(i.key())].parameter[3] = erosion;
+    modification_defs[(i.key())].parameter[4] = weirdness;
+    modification_defs[(i.key())].offset = offset;
+    // modification_defs[(i.key())].type = type;
+  }
+}
+
+#include <llapi/DynamicCommandAPI.h>
+#include <llapi/RegCommandAPI.h>
+#include <llapi/mc/Command.hpp>
+
 void load_all_defs() {
-  logger.info(__func__);
+  // logger.info(__func__);
   fs::fstream fin("./server.properties");
   std::string t, level_name;
   while (fs::getline(fin, t)) {
@@ -178,13 +280,33 @@ void load_all_defs() {
       load_single_climate_def(p);
     }
   }
-  logger.info(__func__);
+  // logger.info(__func__);
 }
 
 #include <llapi/Global.h>
 #include <llapi/ScheduleAPI.h>
+#include <llapi/mc/BiomeRegistry.hpp>
 #include <llapi/mc/Level.hpp>
 #include <llapi/mc/Player.hpp>
+
+struct biome_description_t {
+  int id;
+  std::string name;
+};
+
+namespace std {
+std::string to_string(const biome_description_t &d) {
+  return "id:" + std::to_string(d.id) + " name:" + d.name;
+}
+template <typename T> std::string to_string(const std::vector<T> &v) {
+  std::string r;
+  for (auto &i : v) {
+    r += std::to_string(i);
+    r += "\n";
+  }
+  return r;
+}
+} // namespace std
 
 std::string bn;
 
@@ -195,6 +317,20 @@ void plugin_init() {
   } catch (std::exception &e) {
     logger.error(e.what());
   }
+  DynamicCommand::setup(
+      "biomelist", "print biome list", {}, {},
+      {
+          {},
+      },
+      [](DynamicCommand const &command, CommandOrigin const &origin,
+         CommandOutput &output,
+         std::unordered_map<std::string, DynamicCommand::Result> &results) {
+        std::vector<biome_description_t> ds;
+        origin.getLevel()->getBiomeRegistry().forEachBiome([&ds](Biome &b) {
+          ds.push_back({b.getId(), b.getName()});
+        });
+        output.success(std::to_string(ds));
+      });
 }
 
 #include <llapi/HookAPI.h>
@@ -211,7 +347,7 @@ THook(void,
       "V?$allocator@UBiomeNoiseTarget@@@std@@@std@@AEBVBiomeRegistry@@@Z",
       OverworldBiomeBuilder *_this, std::vector<_BiomeNoiseTarget> &a1,
       BiomeRegistry &a2) {
-  original(_this, a1, a2);
+  // original(_this, a1, a2);
   for (auto &def : defs) {
     auto biome = a2.lookupByName(def.first);
     if (def.second.type == "underground")
@@ -219,19 +355,19 @@ THook(void,
               "UBiomeNoiseTarget@@V?$allocator@UBiomeNoiseTarget@@@std@@@std@@"
               "AEBUParameter@ClimateUtils@@1111MPEAVBiome@@@Z",
               void, OverworldBiomeBuilder *, std::vector<_BiomeNoiseTarget> &,
-              void *, void *, void *, void *, void *, float,
-              void *)(_this, a1, &def.second.first[0], &def.second.first[1],
-                      &def.second.first[2], &def.second.first[3],
-                      &def.second.first[4], def.second.second, biome);
+              void *, void *, void *, void *, void *, float, void *)(
+          _this, a1, &def.second.parameter[0], &def.second.parameter[1],
+          &def.second.parameter[2], &def.second.parameter[3],
+          &def.second.parameter[4], def.second.offset, biome);
     else if (def.second.type == "surface")
       SymCall("?_addSurfaceBiome@OverworldBiomeBuilder@@AEBAXAEAV?$vector@"
               "UBiomeNoiseTarget@@V?$allocator@UBiomeNoiseTarget@@@std@@@std@@"
               "AEBUParameter@ClimateUtils@@1111MPEAVBiome@@@Z",
               void, OverworldBiomeBuilder *, std::vector<_BiomeNoiseTarget> &,
-              void *, void *, void *, void *, void *, float,
-              void *)(_this, a1, &def.second.first[0], &def.second.first[1],
-                      &def.second.first[2], &def.second.first[3],
-                      &def.second.first[4], def.second.second, biome);
+              void *, void *, void *, void *, void *, float, void *)(
+          _this, a1, &def.second.parameter[0], &def.second.parameter[1],
+          &def.second.parameter[2], &def.second.parameter[3],
+          &def.second.parameter[4], def.second.offset, biome);
   }
 }
 
