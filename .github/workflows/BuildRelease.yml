@@ -1,0 +1,42 @@
+name: BuildRelease
+
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v3.2.0
+        with:
+          submodules: "true"
+
+      - name: Download Server
+        working-directory: ${{ env.GITHUB_WORKSPACE }}
+        run: |
+          curl -L -o ./SDK/tools/server.zip https://minecraft.azureedge.net/bin-win/bedrock-server-1.19.81.01.zip
+          cd ./SDK/tools
+          unzip server.zip
+        shell: bash
+
+      - name: Build Library
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          cd ./SDK/tools
+          ./PeEditor.exe -l
+          cp bedrock_server_api.lib ../lib
+          cp bedrock_server_var.lib ../lib
+        shell: bash
+
+      - name: Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          mkdir build
+          cmake -B ./build -DCMAKE_BUILD_TYPE=Release
+          cmake --build ./build --config Release --target ALL_BUILD
+        shell: cmd
+
+      - name: Upload Plugin
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: build
+          path: ${{ github.workspace }}/build/Release/
