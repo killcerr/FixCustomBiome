@@ -6,12 +6,12 @@ namespace FixCustomBiomePlugin {
 
 Plugin::Plugin(ll::plugin::NativePlugin& self) : mSelf(self) {
     mSelf.getLogger().info("loading...");
+    plugin_init();
     // Code for loading the plugin goes here.
 }
 
 bool Plugin::enable() {
     mSelf.getLogger().info("enabling...");
-
     // Code for enabling the plugin goes here.
     return true;
 }

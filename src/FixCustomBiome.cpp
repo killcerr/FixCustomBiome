@@ -6,8 +6,8 @@
 #include <fstream>
 #include <ll/api/plugin/Plugin.h>
 #include <string>
-
-const auto& logger = FixCustomBiomePlugin::logger;
+using namespace std::string_view_literals;
+ll::Logger logger("FixCustomBiome"sv);
 
 namespace fs {
 using namespace std::filesystem;
@@ -39,7 +39,7 @@ struct biome_data_t {
 
 std::unordered_map<std::string, biome_data_t, std::hash<std::string>> defs, modification_defs;
 
-#define LOG_KEY_NOT_FOUND(KEY) (*logger).error("key not found:{}", #KEY);
+#define LOG_KEY_NOT_FOUND(KEY) logger.error("key not found:{}", #KEY);
 
 void load_single_climate_def(fs::path p) {
     // logger.info(__func__);
@@ -57,7 +57,7 @@ void load_single_climate_def(fs::path p) {
     fin.close();
     fs::json j = fs::json::parse(d, nullptr, true, true);
     if (!j.is_object()) return;
-    (*logger).info("{}", j.dump(4));
+    logger.info("{}", j.dump(4));
     for (auto& i : j.items()) {
         _climateUtils_parameter temperature, humidity, continentalness, erosion, weirdness;
         std::string             type;
@@ -271,11 +271,11 @@ void load_all_defs() {
 // #include <llapi/mc/Player.hpp>
 #include <mc/world/actor/player/Player.h>
 
+
 struct biome_description_t {
     int         id;
     std::string name;
 };
-
 namespace std {
 std::string to_string(const biome_description_t& d) { return "id:" + std::to_string(d.id) + " name:" + d.name; }
 template <typename T>
@@ -293,27 +293,27 @@ std::string bn;
 #include <ll/api/event/EventBus.h>
 #include <ll/api/event/world/ServerStartedEvent.h>
 void plugin_init() {
-    (*logger).info("FixCustomBiome loaded");
+    logger.info("FixCustomBiome loaded");
     try {
         load_all_defs();
     } catch (std::exception& e) {
-        (*logger).error(e.what());
+        logger.error(e.what());
     }
-    DynamicCommand::setup(
-        ll::service::getCommandRegistry(),
-        "biomelist",
-        "print biome list",
-        {},
-        {},
-        {
-            {},
-        },
-        [](DynamicCommand const& command, CommandOrigin const& origin, CommandOutput& output, std::unordered_map<std::string, DynamicCommand::Result>& results) {
-            std::vector<biome_description_t> ds;
-            origin.getLevel()->getBiomeRegistry().forEachBiome([&ds](Biome& b) { ds.push_back({b.getId(), b.getName()}); });
-            output.success(std::to_string(ds));
-        }
-    );
+    // DynamicCommand::setup(
+    //     ll::service::getCommandRegistry(),
+    //     "biomelist",
+    //     "print biome list",
+    //     {},
+    //     {},
+    //     {
+    //         {},
+    //     },
+    //     [](DynamicCommand const& command, CommandOrigin const& origin, CommandOutput& output, std::unordered_map<std::string, DynamicCommand::Result>& results) {
+    //         std::vector<biome_description_t> ds;
+    //         origin.getLevel()->getBiomeRegistry().forEachBiome([&ds](Biome& b) { ds.push_back({b.getId(), b.getName()}); });
+    //         output.success(std::to_string(ds));
+    //     }
+    // );
 }
 
 // #include <llapi/HookAPI.h>
@@ -362,8 +362,10 @@ struct _BiomeNoiseTarget {
 // }
 
 LL_AUTO_TYPED_INSTANCE_HOOK(add_biomes_hook, HookPriority::Normal, OverworldBiomeBuilder, "?addBiomes@OverworldBiomeBuilder@@QEBAXAEAV?$vector@UBiomeNoiseTarget@@V?$allocator@UBiomeNoiseTarget@@@std@@@std@@AEBVBiomeRegistry@@@Z", void, std::vector<_BiomeNoiseTarget>& a1, BiomeRegistry& a2) {
+    std::cout << __LINE__ << '\n';
     origin(a1, a2);
     for (auto& def : defs) {
+        std::cout << __LINE__ << " " << def.first << '\n';
         auto biome = a2.lookupByName(def.first);
         if (def.second.type == "underground")
             LL_SYMBOL_CALL("?_addUndergroundBiome@OverworldBiomeBuilder@@AEBAXAEAV?$vector@"
@@ -408,8 +410,11 @@ LL_AUTO_TYPED_INSTANCE_HOOK(add_biomes_hook, HookPriority::Normal, OverworldBiom
 // }
 
 LL_AUTO_TYPED_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes, "?initBiomes@VanillaBiomes@@SAXAEAVBiomeRegistry@@AEBUSpawnSettings@@AEBVBaseGameVersion@@AEBVExperiments@@@Z", void, class BiomeRegistry* a1, struct SpawnSettings const& a2, class BaseGameVersion const& a3, class Experiments const& a4) {
+    std::cout << __LINE__ << '\n';
+
     for (auto& def : defs) {
-        (*logger).info("biome:{}", def.first);
+        // (*logger).info("biome:{}", def.first);
+        std::cout << __LINE__ << " " << def.first << '\n';
         a1->registerBiome(def.first);
     }
     return origin(a1, a2, a3, a4);
@@ -417,7 +422,22 @@ LL_AUTO_TYPED_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes,
 
 #include <mc/world/events/ServerInstanceEventCoordinator.h>
 
-LL_AUTO_TYPED_INSTANCE_HOOK(ServerStartedHook, HookPriority::Normal, ServerInstanceEventCoordinator, &ServerInstanceEventCoordinator::sendServerThreadStarted, void, class ServerInstance& ins) {
+LL_AUTO_TYPED_INSTANCE_HOOK(server_started_hook, HookPriority::Normal, ServerInstanceEventCoordinator, &ServerInstanceEventCoordinator::sendServerThreadStarted, void, class ServerInstance& ins) {
+    std::cout << __LINE__ << '\n';
     origin(ins);
-    plugin_init();
+    DynamicCommand::setup(
+        ll::service::getCommandRegistry(),
+        "biomelist",
+        "print biome list",
+        {},
+        {},
+        {
+            {},
+        },
+        [](DynamicCommand const& command, CommandOrigin const& origin, CommandOutput& output, std::unordered_map<std::string, DynamicCommand::Result>& results) {
+            std::vector<biome_description_t> ds;
+            origin.getLevel()->getBiomeRegistry().forEachBiome([&ds](Biome& b) { ds.push_back({b.getId(), b.getName()}); });
+            output.success(std::to_string(ds));
+        }
+    );
 }
