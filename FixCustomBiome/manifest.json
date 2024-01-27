@@ -1,0 +1,5 @@
+{
+    "name": "FixCustomBiome",
+    "entry": "FixCustomBiome.dll",
+    "type": "native"
+}
