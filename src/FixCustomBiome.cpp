@@ -291,7 +291,8 @@ std::string to_string(const std::vector<T>& v) {
 
 std::string bn;
 #include <ll/api/event/EventBus.h>
-#include <ll/api/event/world/ServerStartedEvent.h>
+// #include <ll/api/event/world/ServerStartedEvent.h>
+#include <ll/api/event/server/ServerStartedEvent.h>
 void plugin_init() {
     logger.info("FixCustomBiome loaded");
     try {
@@ -361,7 +362,7 @@ struct _BiomeNoiseTarget {
 //     }
 // }
 
-LL_AUTO_TYPED_INSTANCE_HOOK(add_biomes_hook, HookPriority::Normal, OverworldBiomeBuilder, "?addBiomes@OverworldBiomeBuilder@@QEBAXAEAV?$vector@UBiomeNoiseTarget@@V?$allocator@UBiomeNoiseTarget@@@std@@@std@@AEBVBiomeRegistry@@@Z", void, std::vector<_BiomeNoiseTarget>& a1, BiomeRegistry& a2) {
+LL_AUTO_TYPE_INSTANCE_HOOK(add_biomes_hook, HookPriority::Normal, OverworldBiomeBuilder, "?addBiomes@OverworldBiomeBuilder@@QEBAXAEAV?$vector@UBiomeNoiseTarget@@V?$allocator@UBiomeNoiseTarget@@@std@@@std@@AEBVBiomeRegistry@@@Z", void, std::vector<_BiomeNoiseTarget>& a1, BiomeRegistry& a2) {
     std::cout << __LINE__ << '\n';
     origin(a1, a2);
     for (auto& def : defs) {
@@ -409,7 +410,7 @@ LL_AUTO_TYPED_INSTANCE_HOOK(add_biomes_hook, HookPriority::Normal, OverworldBiom
 //     return original(a1, a2, a3, a4);
 // }
 
-LL_AUTO_TYPED_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes, "?initBiomes@VanillaBiomes@@SAXAEAVBiomeRegistry@@AEBUSpawnSettings@@AEBVBaseGameVersion@@AEBVExperiments@@@Z", void, class BiomeRegistry* a1, struct SpawnSettings const& a2, class BaseGameVersion const& a3, class Experiments const& a4) {
+LL_AUTO_TYPE_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes, "?initBiomes@VanillaBiomes@@SAXAEAVBiomeRegistry@@AEBUSpawnSettings@@AEBVBaseGameVersion@@AEBVExperiments@@@Z", void, class BiomeRegistry* a1, struct SpawnSettings const& a2, class BaseGameVersion const& a3, class Experiments const& a4) {
     std::cout << __LINE__ << '\n';
 
     for (auto& def : defs) {
@@ -422,7 +423,7 @@ LL_AUTO_TYPED_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes,
 
 #include <mc/world/events/ServerInstanceEventCoordinator.h>
 
-LL_AUTO_TYPED_INSTANCE_HOOK(server_started_hook, HookPriority::Normal, ServerInstanceEventCoordinator, &ServerInstanceEventCoordinator::sendServerThreadStarted, void, class ServerInstance& ins) {
+LL_AUTO_TYPE_INSTANCE_HOOK(server_started_hook, HookPriority::Normal, ServerInstanceEventCoordinator, &ServerInstanceEventCoordinator::sendServerThreadStarted, void, class ServerInstance& ins) {
     std::cout << __LINE__ << '\n';
     origin(ins);
     DynamicCommand::setup(
