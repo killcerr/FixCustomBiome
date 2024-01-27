@@ -1,0 +1,22 @@
+{
+    "format_version": 2,
+    "tooth": "github.com/killcerr/FixCustomBiome",
+    "version": "0.1.1",
+    "info": {
+        "name": "FixCustomBiome",
+        "description": "Fix Custom Biome",
+        "author": "killcerr",
+        "source": "github.com/killcerr/FixCustomBiome",
+        "tags": [
+            "LeveLamina"
+        ]
+    },
+    "files": {
+        "place": [
+            {
+                "src": "FixCustomBiome/*",
+                "dest": "plugins/FixCustomBiome"
+            }
+        ]
+    }
+}
