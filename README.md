@@ -1,3 +1,3 @@
 # FixCustomBiome
-fix custom biomes in the overworld.
+fix custom biome.
 ## usage
