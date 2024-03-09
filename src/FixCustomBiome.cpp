@@ -224,9 +224,9 @@ void load_signal_biome_modification_defs(fs::path p) {
 }
 
 // #include <llapi/DynamicCommandAPI.h>
-#include <ll/api/command/DynamicCommand.h>
+// #include <ll/api/command/DynamicCommand.h>
 // #include <llapi/RegCommandAPI.h>
-#include <ll/api/command/CommandRegistrar.h>
+// #include <ll/api/command/CommandRegistrar.h>
 // #include <llapi/mc/Command.hpp>
 
 void load_all_defs() {
