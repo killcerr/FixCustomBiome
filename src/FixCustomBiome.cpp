@@ -28,7 +28,7 @@ struct _climateUtils_parameter {
 #include <mc/world/level/biome/Biome.h>
 namespace std {
 std::string to_string(const _climateUtils_parameter& p) { return "max:" + std::to_string((float)p.max / 10000) + " min:" + std::to_string((float)p.min / 10000); }
-std::string to_string(const Biome& b) { return "name:" + b.getName() + " id:" + std::to_string(b.getId()); }
+std::string to_string(const Biome& b) { return "name:" + b.getName().getString() + " id:" + std::to_string(b.getId()); }
 } // namespace std
 
 struct biome_data_t {
