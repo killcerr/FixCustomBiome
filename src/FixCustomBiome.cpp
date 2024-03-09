@@ -426,7 +426,7 @@ LL_AUTO_TYPE_STATIC_HOOK(init_biomes_hook, HookPriority::Normal, VanillaBiomes, 
 LL_AUTO_TYPE_INSTANCE_HOOK(server_started_hook, HookPriority::Normal, ServerInstanceEventCoordinator, &ServerInstanceEventCoordinator::sendServerThreadStarted, void, class ServerInstance& ins) {
     std::cout << __LINE__ << '\n';
     origin(ins);
-    DynamicCommand::setup(
+    /*DynamicCommand::setup(
         ll::service::getCommandRegistry(),
         "biomelist",
         "print biome list",
@@ -440,5 +440,5 @@ LL_AUTO_TYPE_INSTANCE_HOOK(server_started_hook, HookPriority::Normal, ServerInst
             origin.getLevel()->getBiomeRegistry().forEachBiome([&ds](Biome& b) { ds.push_back({b.getId(), b.getName()}); });
             output.success(std::to_string(ds));
         }
-    );
+    );*/
 }
